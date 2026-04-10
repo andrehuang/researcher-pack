@@ -1,0 +1,28 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# Local scratch / test installs
+scratch/
+tmp/
+.tmp/
+test-pack-*/
+
+# Local Claude Code state (in case someone runs the wizard inside this repo)
+.claude/research-state.yaml
+.claude/settings.local.json
+.claude/autocommit.enabled
+.claude/.commit-pending
+.claude/.commit-lock
+events.jsonl
+
+# Python (if users extend with Python tooling)
+__pycache__/
+*.pyc
+.venv/

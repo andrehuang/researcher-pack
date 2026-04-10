@@ -1,0 +1,53 @@
+# Research State — Auto-maintained by the Researcher Pack hooks and skills.
+# Read at session start per the research-session skill. Do not edit manually.
+# Values below are seeded by setup.sh init.
+
+last_updated: "__TS__"
+
+# Canonical paths (relative to repo root unless absolute).
+# Skills read these instead of hardcoding locations.
+paths:
+  wiki: __WIKI_PATH__
+  mental_gym: __MENTAL_GYM_PATH__
+  events_log: events.jsonl
+  principles: ~/.claude/principles
+
+# Meta about the research domain
+domain: "__DOMAIN__"
+
+session:
+  last_paper_ingested: null
+  last_companion_session: null
+  last_writing_review: null
+
+gym:
+  total_topics: 0
+  topics_due: 0
+  weakest_topic: null
+  last_session: null
+  avg_mastery: 0.0
+  streak_days: 0
+  sessions_total: 0
+
+wiki:
+  total_pages: 0
+  topics: 0
+  concepts: 0
+  groups: 0
+  syntheses: 0
+  queries: 0
+  stale_pages: []
+  last_ingest: null
+  orphans: []
+
+ideas:
+  raw_ideas: 0
+  open_questions: 0
+  dots_to_connect: 0
+  building_blocks_candidate: 0
+  building_blocks_confirmed: 0
+
+suggested_actions:
+  - type: ingest
+    reason: "Wiki is empty. Ingest your first source to get started."
+    command: "/paper-read <path-to-pdf-or-url>"
