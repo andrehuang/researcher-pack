@@ -1,0 +1,11 @@
+{
+  "livePreview": false,
+  "defaultViewMode": "source",
+  "newFileLocation": "folder",
+  "newFileFolderPath": "topics",
+  "attachmentFolderPath": "sources/attachments",
+  "useMarkdownLinks": false,
+  "alwaysUpdateLinks": true,
+  "showLineNumber": true,
+  "promptDelete": true
+}

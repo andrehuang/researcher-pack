@@ -16,7 +16,7 @@ ultrathink
 
 Read these files to build a complete picture (in parallel where possible):
 
-1. **`.claude/research-state.yaml`** — current research state (gym status, wiki stats, recent activity, suggested actions)
+1. **`.claude/research-state.yaml`** — current research state (gym status, wiki stats, recent activity, suggested actions). Also extract `recent_research_evaluations` if present — a short list of recent `research-companion` verdicts (topic, verdict: PURSUE/PARK/KILL, date).
 2. **`events.jsonl`** — last 10-15 events for recent activity context
 3. **`IDEAS.md`** — first 80 lines for active threads, building blocks, open questions
 4. **`CLAUDE.md`** — current projects table for active project awareness
@@ -43,6 +43,7 @@ Knowledge Base
 
 Active Threads
   [Top 2-3 items from IDEAS.md Dots to Connect or recent events]
+  Recent research evaluations: [e.g. "2 PURSUE, 1 PARK" — omit line if none]
 
 Writing
   [Unresolved review findings if any]
@@ -86,6 +87,8 @@ Tell the user: "Switching to paper-read mode." Then follow the paper-read SKILL.
 ### "Brainstorm" / "Explore" / "New direction"
 Invoke `/research-companion` with the user's topic.
 Tell the user: "Starting a structured ideation session."
+
+**Note:** If the user mentions a topic that has a prior entry in `recent_research_evaluations` (from state), route to `/research-companion <topic>` as well — the companion's Phase 1 prior-context check will surface the earlier verdict and reasoning, so the user picks up where they left off rather than re-deriving it.
 
 ### "Write" / "Revise" / "Review"
 Invoke `/academic` for writing tasks.

@@ -135,6 +135,8 @@ After presenting the synthesis:
 
 ## Academic Writing Playbook
 
+For full-paper or thesis workflows prefer `/academic` (the dedicated companion orchestrator); `/orchestrate` is for mixed code+writing tasks, debugging, or domains the academic skill does not cover.
+
 When the task involves academic writing (thesis, paper, report), use these deployment patterns:
 
 ### Review Workflows

@@ -124,6 +124,8 @@ Update `.claude/research-state.yaml`:
 - Update `wiki.total_pages` if new pages were created
 - Set `wiki.last_ingest` to today's date
 
+**Post-ingest review offer:** If a topic page grew substantially during this ingest — a rough heuristic is "many lines added" (e.g. >30 new lines) OR the `## Key Papers & Approaches` section was directly edited — offer to hand off to `/academic review wiki/topics/<file>.md` so the writing quality of the updated page gets a quick pass. Phrase it as "Want me to run `/academic review wiki/topics/<file>.md` on the updated page?" Silently skip this offer if the `/academic` skill is not installed (check for `~/.claude/skills/academic/SKILL.md` or a plugin-provided equivalent).
+
 ---
 
 ## Phase 5: FOLLOW-UP — Chain to Next Action
@@ -152,6 +154,8 @@ If the discussion revealed new dots-to-connect, open questions, or building bloc
 ### Option D: Update current paper draft
 If the paper is relevant to an active writing project:
 "This paper should be cited in your [section] of [paper]. Want me to update the draft?"
+
+If the user is actively drafting AND a related topic page exists in the wiki, also offer `/academic draft` to pull the ingested content into the draft section — e.g. "You have an active draft at [file] and this paper lands in [[topic]]. Want me to run `/academic draft` to weave the new material in?" Skip this offer silently if the `/academic` skill is not installed.
 
 ### Option E: Read another related paper
 If the paper's references contain highly relevant work:

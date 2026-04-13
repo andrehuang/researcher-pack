@@ -19,7 +19,7 @@ Read all sources in parallel:
 1. **`events.jsonl`** — filter to the review period (default: last 7 days). Count events by type.
 2. **`.claude/research-state.yaml`** — current gym, wiki, and session state
 3. **`IDEAS.md`** — check for changes (git diff if available), note new items
-4. **Wiki pages** — Glob all pages, check `last_reviewed` dates, count by type
+4. **Wiki pages** — Glob all pages, check `last_reviewed` dates, count by type. Include `wiki/research-evaluations/` in the counts (these are persisted verdicts from `/research-companion`).
 5. **Mental Gym status** — run `cd mental-gym && .venv/bin/mental-gym status` to get current mastery data
 6. **Git log** — run `git log --oneline --since="7 days ago"` for commit activity
 7. **`.review/` directory** — check for unresolved academic review findings
@@ -44,11 +44,17 @@ Activity Summary
   Commits: [N]
 
 Knowledge Growth
-  Wiki: [total pages] pages ([+N new] this week)
+  Wiki: [total pages] pages ([+N new] this week, includes research-evaluations/)
   Topics mastered (>70%): [list or "none yet"]
   Topics improved: [list with deltas, e.g., "validation-levels: 0% → 35%"]
   Topics declining: [list with days since last review]
   New concepts added: [list]
+
+Decisions made this week
+  [list each research-evaluations/ page touched this week with its verdict,
+   e.g. "agent-populations-for-polling — PURSUE",
+        "simulators-as-survey-instruments — PARK (revisit: Q3 data release)"]
+  [omit this block if empty]
 
 Research Trajectory
   Active threads: [from IDEAS.md and recent events]
@@ -83,6 +89,14 @@ After the report, add a brief analysis section (3-5 bullet points):
 - Are there stale wiki pages in areas of active research?
 - Is the researcher learning broadly but not deeply, or vice versa?
 
+### Parked ideas ready to revisit (soft heuristic)
+Scan `wiki/research-evaluations/*.md` for any PARK verdict where:
+- `revisit_conditions` in frontmatter is non-empty, AND
+- the evaluation `date` is older than 30 days before today, AND
+- the topic (or a close keyword) appears in events from the review period (e.g. a paper ingestion, IDEAS.md update, or wiki edit that touched the same area).
+
+Flag these gently — "PARKed idea '[topic]' may be worth revisiting: condition was '[revisit_conditions]', and [event] this week touches that area." Do not auto-promote; this is a nudge. Skip silently if `wiki/research-evaluations/` doesn't exist.
+
 ## Priorities for Next Week
 
 Based on the analysis, suggest 3-5 priorities ranked by impact:
@@ -113,7 +127,9 @@ After presenting the digest, offer:
 
 4. **Set focus for next week** — "Want to set a specific focus for next week? I'll adjust your research-state.yaml suggested actions."
 
-5. **Share as event** — Emit a weekly review event:
+5. **Drafts touched but not reviewed** — Cross-reference `events.jsonl` `writing:edit` events in the review period against `.review/` findings. For each draft file that has `writing:edit` events but no corresponding entry under `.review/` (or a stale one older than the most recent edit), list it and suggest `/academic review <file>`. Skip this pass silently if the `/academic` skill is not installed (check `~/.claude/skills/academic/SKILL.md` or a plugin equivalent); the suggestion line should also be omitted in that case.
+
+6. **Share as event** — Emit a weekly review event:
 ```jsonl
 {"ts":"...","type":"review:weekly","detail":"Week of [dates]: [N] papers, [N] sessions, [N] wiki updates","source":"weekly-review"}
 ```

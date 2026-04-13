@@ -21,3 +21,7 @@ Empty. Ingest your first source to populate this catalog.
 ## Queries
 
 *No promoted query results yet.*
+
+## Research Evaluations
+
+*No research evaluations yet. Run `/research-companion` to produce a dimension-scored verdict, then save it to `wiki/research-evaluations/YYYY-MM-DD-<topic-slug>.md`.*

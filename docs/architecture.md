@@ -26,6 +26,8 @@ At session start, the `research-session` skill reads all three. During a session
 
 The `paths:` block at the top of `research-state.yaml` is the only place that resolves physical locations — everything else uses relative references the agent resolves on read.
 
+The wiki carries one page type that deserves a separate mention: `research_evaluation`. A `research-evaluation` page is what `/research-companion` writes at the end of its Decide phase — a dated record of the idea it considered, the alternatives it killed, the stress tests it survived, the final verdict (PURSUE / PARK / KILL), and the revisit conditions if it was parked. These pages compose with the rest of the substrate in four ways. The wiki linter treats them as first-class (missing frontmatter fails the same lint checks). The index page lists them alongside topics and concepts. The `weekly-review` skill scans them to produce the "decisions you made this week" section of the digest. The `research_hook.sh` dispatcher recognizes edits under `wiki/research-evaluations/` and emits a dedicated event, so the history of every decision is recoverable from the event log alone.
+
 ## Layer 3 — Bookkeeping daemon
 
 Two shell scripts in `hooks/`:
@@ -57,4 +59,16 @@ At no point did you write a commit message, update an index by hand, or maintain
 
 **New path convention**: edit the `paths:` block in `templates/research-state.yaml.template` and the skills that read it. Skills are forgiving — they default to standard locations if a path is missing.
 
+## The optional-companion contract
+
+researcher-pack has one companion plugin it knows about by name: **academic-writing-agents**. The contract is detection at link time and silent skip at runtime. `setup.sh link` does not fail if the companion isn't installed; it just links the pack's own skills and agents. Skill prompts that reference `/academic review`, `/academic draft`, `paper-crawler`, or `research-analyst` are written so that those references degrade gracefully — when the referenced command doesn't exist, the skill notes the absence and continues with the pack-local tools (`research-strategist` for DEEPEN, the wiki substrate for FRAME). There is no feature detection beyond "did the command resolve" — no version pinning, no capability negotiation. Install the companion to upgrade; uninstall it and every skill keeps running.
+
+### The visual dashboard
+
+The pack intentionally ships no dashboard of its own. The wiki is plain markdown, so the right dashboard is a markdown viewer you already trust — and the recommended viewer is Obsidian. Because Obsidian vaults are just folders with an `.obsidian/` directory for config, we ship a starter at `templates/wiki/.obsidian/` that `setup.sh init` drops into your new wiki during scaffolding. It's a project-template artifact, not a user-level one: it lives inside each research repo's wiki directory (not `~/.claude/`), so every research project can customize it independently without touching a global config. That means a user with three research repos gets three `.obsidian/` directories, each freely forkable.
+
 The pattern is portable across implementations because the contract is just "read and write these plain-text files." You can swap any one tool for a better one as long as the new one honors the state contract.
+
+## README philosophy
+
+The README for this repo is deliberately narrative rather than reference. It opens with a hook paragraph, walks through the loop as a single command (`/research-session`), shows the loop and components as two Mermaid figures rather than tables, tells a Monday-through-Friday vignette, and only then drops into per-component specifics. The rationale: a research environment that exposes only reference documentation forces the user to re-learn it each time they return. A narrative they can scan in under two minutes on a Monday morning is what keeps the loop actually running. The architecture document you're reading now is the reference side of the same split — it exists so that when the README's narrative leaves out a detail, there is exactly one other place to look. Two figures, one narrative, one reference. Single-file per side.

@@ -16,7 +16,7 @@ ultrathink
 
 Most brainstorming produces lists of ideas that go nowhere. This session is different:
 - Ideas are generated AND evaluated in the same session
-- The researcher leaves with a verdict (Pursue / Park / Kill) for their top ideas
+- The researcher leaves with a verdict (PURSUE / PARK / KILL) for their top ideas
 - The session includes Carlini's conclusion-first test: if you can't write the conclusion, the idea isn't ready
 - Cross-field connections and assumption-challenging are prioritized over safe, incremental ideas
 
@@ -38,7 +38,18 @@ If the user also has the **Academic Writing Agents** plugin installed, you may a
 
 **Goal:** Understand what the researcher cares about, what's bugging them, and what constraints they have.
 
-Before deploying any agents, have a brief conversation:
+**Prior context check:** Before interviewing, gather what the wiki and state already know:
+
+1. Read `.claude/research-state.yaml` → check `recent_research_evaluations` (last 5 verdicts).
+2. If `wiki/` exists, read `wiki/index.md` and scan for:
+   - `wiki/research-evaluations/*.md` whose `topic` field overlaps with $ARGUMENTS
+   - `wiki/topics/*.md` whose subject overlaps (a topic page is prior thinking even if no formal research evaluation was recorded)
+3. Fall back: also check `~/.claude/projects/*/memory/research-evaluations/` for files recorded outside any wiki (compatibility with upstream and non-pack users).
+4. Present what you found: "Found N prior research evaluations and M related topic pages on adjacent themes." Show one-line summaries, dates, and verdicts.
+5. Ask: "Want to revisit one of these, start fresh, or skim the prior thinking first?"
+6. For any PARK verdict, evaluate whether the recorded `revisit_conditions` have been met and note this to the user.
+
+If nothing prior is found (or after the user chooses to start fresh), have a brief conversation:
 
 1. **What's the problem space?** Get the broad area of interest.
 2. **What's bugging you?** What feels wrong, missing, or poorly done in this field? (This is the richest source of good ideas — problems that make you want to "scream" are often problems worth solving.)
@@ -59,6 +70,8 @@ Deploy the **brainstormer** agent with:
 - The problem space from Phase 1
 - The researcher's background and constraints
 - Explicit instruction to prioritize cross-field connections and assumption-challenging
+
+If `brainstormer` is somehow not available (e.g., the user has not run `setup.sh link`), fall back to a general-purpose agent with the brainstormer prompt embedded inline — and tell the user to re-run setup.
 
 Present the results organized by type:
 - Cross-field connections
@@ -102,15 +115,19 @@ Highlight which ideas survived and which were killed. For REFINE verdicts, note 
 
 **Goal:** Validate the surviving ideas against reality — existing literature, competitive landscape, and timing.
 
-For each idea with a PURSUE or REFINE verdict, deploy the **research-strategist** in parallel:
+For each idea with a PURSUE or REFINE verdict, run one of two modes depending on whether the `academic-writing-agents` companion is installed:
+
+**Default path (companion installed):** Deploy `research-strategist` (from researcher-pack) plus `research-analyst` and `paper-crawler` (from academic-writing-agents) in parallel for full literature/landscape/strategic coverage. Use `research-strategist` for:
 - Scooping risk assessment (Mode 5)
 - Competitive landscape and comparative advantage (Mode 2)
 - Timing assessment (Mode 3)
 
-If `research-analyst` or `paper-crawler` agents are available, deploy them in parallel to:
+Use `research-analyst` and `paper-crawler` to:
 - Check for existing work that overlaps
 - Identify key papers to read or cite
 - Assess where the idea fits in the current literature
+
+**Fallback path (companion missing):** Deploy `research-strategist` only (Modes 2, 3, 5 as above). Note in the synthesis: "Literature coverage is shallow because the academic-writing-agents companion is not installed — see README → Companion plugins to enable systematic literature search." Do not block the phase or the session.
 
 Present findings as a reality check:
 - **Green flags:** Evidence this direction is viable and timely
@@ -140,6 +157,12 @@ Present these drafts and ask: "Does this feel like a paper you'd be excited to w
 
 If the conclusion feels hollow or generic, that's a signal. Say so directly.
 
+**Opt-in drafting chain.** After the user agrees the conclusion feels right, ASK: "Want me to draft the abstract for real?" Default off — Phase 5 stays cheap and abandonable.
+
+- **If yes and the `academic-writing-agents` companion is installed:** chain `section-drafter` → `prose-polisher` → `writing-reviewer` to expand the 5-sentence abstract, tighten the prose, and sanity-check.
+- **If yes and the companion is missing:** print the install pointer (README → Companion plugins) and offer to draft inline with a general-purpose agent.
+- **If no:** stay in ideation mode and continue to Phase 6.
+
 ---
 
 ### Phase 6: DECIDE — Final Verdict and Next Steps
@@ -168,6 +191,19 @@ For PURSUE ideas, the "first step" must be:
 For PARK ideas, note what would need to change for them to become PURSUE (timing shift, new tool/dataset, collaborator).
 
 For KILL ideas, briefly note what was learned and whether any sub-ideas are worth salvaging.
+
+### Save Research Evaluation (wiki-integrated)
+
+After presenting the verdict, persist the research evaluation to the wiki:
+
+1. **Determine wiki location:** Look for `wiki/` in CWD; else `wiki/` in the project root (walk up 3 levels). If no wiki exists, fall back to `~/.claude/projects/<slug>/memory/research-evaluations/` so the feature still works for users who do not run the wiki.
+2. **Write the page** at `wiki/research-evaluations/YYYY-MM-DD-<slug>.md` with the schema defined in `wiki/wiki.schema.md` (type: research_evaluation; verdict; nugget; dimension table; concerns; watch list; revisit conditions; `## Related` wikilinks to any topic pages found in Phase 1).
+3. **Wire into the graph:** add a `[[YYYY-MM-DD-<slug>]]` link from the most-related topic page's `## Related` section so the new page is not an orphan.
+4. **Append to wiki/log.md:** `YYYY-MM-DD research_evaluation: <topic> — <verdict>`.
+5. **Update wiki/index.md** under `## Research Evaluations`.
+6. **Update research-state.yaml**: prepend `{date, slug, verdict, nugget}` to `recent_research_evaluations`, truncate to last 5.
+7. **Emit an event** so `research_hook.sh` and weekly-review notice — the hook will fire automatically on the file Write.
+8. Confirm: "Saved to wiki/research-evaluations/<file>. Linked from <topic-page>. Will surface in the next research-session briefing."
 
 ---
 

@@ -86,12 +86,42 @@ link_user_assets() {
     done
 
     # Principles: copied (writing and research-strategy principles)
+    # Non-clobber: skip byte-identical files silently; leave differing files
+    # in place with a neutral note so user-customized principles aren't lost.
     mkdir -p "$PRINCIPLES_TARGET"
     for p in "$PACK_DIR"/principles/*.md; do
         [ -f "$p" ] || continue
-        cp "$p" "$PRINCIPLES_TARGET/$(basename "$p")"
-        action "principle: $(basename "$p")"
+        local base dest
+        base=$(basename "$p")
+        dest="$PRINCIPLES_TARGET/$base"
+        if [ -f "$dest" ] && cmp -s "$p" "$dest"; then
+            continue
+        elif [ -f "$dest" ]; then
+            info "principle: $base (existing differs — left as-is, pack copy NOT applied)"
+        else
+            cp "$p" "$dest"
+            action "principle: $base"
+        fi
     done
+}
+
+detect_academic_companion() {
+    # Optional companion plugin detection. Neutral info — not a warning.
+    local found=""
+    if [ -f "$HOME/.claude/skills/academic/SKILL.md" ]; then
+        found="$HOME/.claude/skills/academic/SKILL.md"
+    else
+        for candidate in "$HOME"/.claude/plugins/*/skills/academic/SKILL.md; do
+            [ -f "$candidate" ] || continue
+            found="$candidate"
+            break
+        done
+    fi
+    if [ -n "$found" ]; then
+        printf "  [ok] optional companion academic-writing-agents detected — /academic is wired in\n"
+    else
+        printf "  [i]  optional companion academic-writing-agents not installed — install for the writing pipeline (see README -> Companion plugins)\n"
+    fi
 }
 
 install_repo_hooks() {
@@ -128,6 +158,8 @@ run_link() {
     echo "Linking skills, agents, and principles into ~/.claude/"
     echo ""
     link_user_assets
+    echo ""
+    detect_academic_companion
     echo ""
     bold "Done."
     echo "Use \`./setup.sh init\` from a research repo to scaffold hooks and state files."
@@ -238,12 +270,35 @@ run_init() {
     if [ -f "$WIKI_ABS/wiki.schema.md" ]; then
         warn "wiki already initialized at $WIKI_ABS — leaving as-is"
     else
-        mkdir -p "$WIKI_ABS"/{topics,concepts,groups,syntheses,queries,sources,entities}
+        mkdir -p "$WIKI_ABS"/{topics,concepts,groups,syntheses,queries,sources,entities,research-evaluations}
         cp "$PACK_DIR/templates/wiki/wiki.schema.md" "$WIKI_ABS/wiki.schema.md"
         cp "$PACK_DIR/templates/wiki/CLAUDE.md"      "$WIKI_ABS/CLAUDE.md"
         cp "$PACK_DIR/templates/wiki/index.md"       "$WIKI_ABS/index.md"
         cp "$PACK_DIR/templates/wiki/log.md"         "$WIKI_ABS/log.md"
         action "wiki scaffolded at $WIKI_ABS"
+    fi
+
+    # 11b. Obsidian dashboard starter (optional — only if template ships it)
+    if [ -d "$PACK_DIR/templates/wiki/.obsidian" ]; then
+        mkdir -p "$WIKI_ABS/.obsidian"
+        # Copy each file individually, skipping anything already present so we
+        # never clobber a user's existing Obsidian vault config.
+        local any_copied="no"
+        while IFS= read -r src; do
+            [ -f "$src" ] || continue
+            local rel target target_dir
+            rel="${src#$PACK_DIR/templates/wiki/.obsidian/}"
+            target="$WIKI_ABS/.obsidian/$rel"
+            target_dir=$(dirname "$target")
+            mkdir -p "$target_dir"
+            if [ ! -e "$target" ]; then
+                cp "$src" "$target"
+                any_copied="yes"
+            fi
+        done < <(find "$PACK_DIR/templates/wiki/.obsidian" -type f)
+        if [ "$any_copied" = "yes" ]; then
+            action "Obsidian dashboard starter installed in wiki/.obsidian/"
+        fi
     fi
 
     # 12. Link user-level assets

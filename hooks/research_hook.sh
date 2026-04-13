@@ -9,6 +9,14 @@ EVENTS_FILE="$REPO_ROOT/events.jsonl"
 MENTAL_GYM_DIR="$REPO_ROOT/mental-gym"
 AUTO_COMMIT="$REPO_ROOT/.claude/hooks/auto_commit.sh"
 
+academic_skill_installed() {
+    [ -f "$HOME/.claude/skills/academic/SKILL.md" ] && return 0
+    for p in "$HOME"/.claude/plugins/*/skills/academic/SKILL.md; do
+        [ -f "$p" ] && return 0
+    done
+    return 1
+}
+
 # Read hook input from stdin
 INPUT=$(cat)
 
@@ -92,6 +100,18 @@ case "$FILE_PATH" in
         ;;
 esac
 
+# --- Research evaluations (persisted /research-companion verdicts) ---
+case "$FILE_PATH" in
+    */wiki/research-evaluations/*.md)
+        DOC_NAME=$(basename "$FILE_PATH" .md)
+        emit_event "research_evaluation:save" "Saved evaluation: $DOC_NAME" "hook"
+        update_state_timestamp
+        echo "[Research Hook] Research evaluation '$DOC_NAME' saved. Verdict will surface in the next /research-session briefing."
+        [ -x "$AUTO_COMMIT" ] && bash "$AUTO_COMMIT" "$FILE_PATH"
+        exit 0
+        ;;
+esac
+
 # --- Wiki index/log (no suggestion, just track) ---
 case "$FILE_PATH" in
     */wiki/index.md|*/wiki/log.md)
@@ -119,7 +139,11 @@ case "$FILE_PATH" in
         emit_event "writing:edit" "Edited: $DOC_NAME" "hook"
         update_state_timestamp
         # Only suggest review for substantial files, not tiny edits
-        echo "[Research Hook] Draft '$DOC_NAME' edited. When ready for review, try: /academic review"
+        if academic_skill_installed; then
+            echo "[Research Hook] Draft '$DOC_NAME' edited. When ready for review, try: /academic review"
+        else
+            echo "[Research Hook] Draft '$DOC_NAME' edited."
+        fi
         exit 0
         ;;
 esac

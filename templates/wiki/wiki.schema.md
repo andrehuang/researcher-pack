@@ -135,6 +135,48 @@ Structure:
 4. `## Sources Consulted`
 5. `## Follow-up Questions`
 
+### Research Evaluation Page (`research-evaluations/`)
+
+Point-in-time verdicts on research directions, produced by `/research-companion`.
+Each page captures a snapshot of how a direction looked when evaluated — the verdict,
+the dimension scores, the concerns, and the conditions under which we should revisit.
+
+```yaml
+---
+type: research_evaluation
+date: YYYY-MM-DD
+topic: short-topic-slug
+verdict: PURSUE | PARK | KILL
+nugget: "one-sentence takeaway worth remembering"
+revisit_conditions: [condition 1, condition 2]
+last_reviewed: YYYY-MM-DD
+related_topics: [[topic-slug]]
+related_projects: [project-slug, ...]
+---
+```
+
+Structure:
+1. `# Title` — the research direction being evaluated
+2. `## Verdict` — 2-3 sentences stating the verdict and core reasoning
+3. `## Dimension Scores` — the Phase 3 table from `/research-companion` (dimension, score, rationale)
+4. `## Key Concerns` — the top risks, open questions, or blockers
+5. `## Watch List` — signals, papers, or results that would change the verdict
+6. `## Revisit Conditions` — explicit triggers for re-opening this evaluation
+7. `## Related` — `[[wikilinks]]` to topics, concepts, and prior evaluations
+
+**Canonical verdict enum:** The enum is uppercase and closed: PURSUE, PARK, or KILL. Do not invent new values — alignment matters for dashboard queries and weekly-review scans.
+
+**Word limit:** 600 words.
+
+**Filename convention:** `research-evaluations/YYYY-MM-DD-<topic-slug>.md` — kebab-case
+directory plus a dated filename. This is an explicit exception to the no-dates-in-filenames
+rule because evaluations are point-in-time artifacts you want chronologically sortable;
+an older verdict is not wrong, it is just superseded.
+
+**Naming rationale:** We use the full name `research_evaluation` rather than just `evaluation`
+because "evaluation" is itself a research subfield (model evals, benchmark evals, human eval
+studies); the qualifier prevents collisions in topic pages and search.
+
 ---
 
 ## Linking Conventions
@@ -157,6 +199,7 @@ Structure:
 - Entity pages: under 400 words (summaries, not full reviews)
 - Synthesis pages: under 800 words (focused arguments)
 - Query pages: under 600 words
+- Research evaluation pages: under 600 words
 
 ---
 
