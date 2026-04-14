@@ -18,7 +18,7 @@ Read these files to build a complete picture (in parallel where possible):
 
 1. **`.claude/research-state.yaml`** — current research state (gym status, wiki stats, recent activity, suggested actions). Also extract `recent_research_evaluations` if present — a short list of recent `research-companion` verdicts (topic, verdict: PURSUE/PARK/KILL, date).
 2. **`events.jsonl`** — last 10-15 events for recent activity context
-3. **`IDEAS.md`** — first 80 lines for active threads, building blocks, open questions
+3. **`IDEAS.md`** — first 80 lines for active threads, building blocks, open questions. Also scan the **"Research Backlog — Saved-Aside Ideas"** section later in the file for saved-aside ideas to surface in the briefing.
 4. **`CLAUDE.md`** — current projects table for active project awareness
 5. **Wiki staleness check**: Glob `wiki/topics/*.md` + `wiki/concepts/*.md`, check `last_reviewed` dates in frontmatter for pages older than 60 days
 
@@ -44,6 +44,11 @@ Knowledge Base
 Active Threads
   [Top 2-3 items from IDEAS.md Dots to Connect or recent events]
   Recent research evaluations: [e.g. "2 PURSUE, 1 PARK" — omit line if none]
+
+Research Backlog (N saved-aside ideas)
+  - [date] idea name — one-line description
+  - [date] idea name — one-line description
+  Update / explore / discard any of these? (omit block if none)
 
 Writing
   [Unresolved review findings if any]
@@ -146,7 +151,9 @@ When the user is done (says "done", "that's it", "wrap up", or moves to unrelate
 
 3. **Update `.claude/research-state.yaml`** with any changes from the session (new ingestions, training status, etc.)
 
-4. **Preview next session**: "For next time: you have [N] topics due for review, and [suggestion]."
+4. **Field Map Check**: Did this session produce any new insights, reframings, or newly positioned works that should update `wiki/syntheses/field-map.md`? If yes, propose a specific edit — a line to add, a row in the positioning table, or a refinement to a pillar. Low-friction: one question at wrap-up, not a full review.
+
+5. **Preview next session**: "For next time: you have [N] topics due for review, and [suggestion]."
 
 ## Orchestration Rules
 
