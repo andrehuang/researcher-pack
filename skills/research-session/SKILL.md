@@ -153,7 +153,17 @@ When the user is done (says "done", "that's it", "wrap up", or moves to unrelate
 
 4. **Field Map Check**: Did this session produce any new insights, reframings, or newly positioned works that should update `wiki/syntheses/field-map.md`? If yes, propose a specific edit — a line to add, a row in the positioning table, or a refinement to a pillar. Low-friction: one question at wrap-up, not a full review.
 
-5. **Preview next session**: "For next time: you have [N] topics due for review, and [suggestion]."
+5. **Deep-Read Entity Length Check**: If this session created or grew a deep-read entity page past 2,000 words, verify it has the structured template from `wiki/wiki.schema.md` → **Deep-Read Entity Page — Structure at Length** (Reading Guide + ToC + Obsidian callouts for TL;DR / Key Insight / warnings + bolded lead sentences on each major section). If the page grew past 5,000 words, ask the user whether to factor it into a parent index + child sub-pages. This check is cheap at wrap time and essential — a deep-read entity that cannot be skimmed in a week has failed its purpose as passive indexing.
+
+6. **Commit & Push**: The repo has a debounced auto-commit hook (`.claude/hooks/auto_commit.sh`) that covers most incremental writes, but the hook (a) only fires on paths it explicitly watches — historically missing new top-level wiki subdirectories like `wiki/entities/` or `wiki/sources/` — and (b) operates on a 30-second debounce, so the last edits of a session may still be pending when the user stops. Do a **belt-and-braces final commit** at session wrap:
+   - Run `git status --short` to inventory uncommitted / untracked files.
+   - Stage explicit paths (never `git add -A` — avoids accidentally staging secrets or stray files). Cover at minimum: every file edited or created this session, `events.jsonl`, `.claude/research-state.yaml`, `wiki/log.md`, `wiki/index.md`, and any new `wiki/entities/*` or `wiki/sources/*` files.
+   - Commit with a short session-wrap message (e.g. `research: session N wrap — <one-line summary>`) using a HEREDOC so the body can include the session summary plus the `Co-Authored-By: Claude Opus 4.6 (1M context)` trailer.
+   - Push: `git push origin main`.
+   - Report the commit SHA and push result back to the user.
+   - **Out-of-repo files** like updated skills at `~/.claude/skills/*/SKILL.md` are **not** in the research repo and will not be committed by this step — name them explicitly in the wrap report so the user knows they're outside git (`~/.claude` is user-config scope, not project scope).
+
+7. **Preview next session**: "For next time: you have [N] topics due for review, and [suggestion]."
 
 ## Orchestration Rules
 
