@@ -1,7 +1,7 @@
 ---
 name: research-companion
 description: >-
-  Strategic research companion — brainstorm, evaluate, and decide on research directions. TRIGGER when the user wants to brainstorm research, evaluate research ideas, do project triage, or explore a problem space. Orchestrates brainstormer, idea-critic, and research-strategist agents through a 6-phase pipeline: Seed → Diverge → Evaluate → Deepen → Frame → Decide. Includes Carlini's conclusion-first test.
+  Strategic research companion — brainstorm, evaluate, and decide on research directions. TRIGGER when the user wants to brainstorm research, evaluate research ideas, do project triage, or explore a problem space. ALSO TRIGGER when the user proposes a research idea mid-session, shares a hunch, or uses phrasings like "what if…", "I'm thinking…", "maybe we could…", "here's an idea…", "should we try X?", "wouldn't it be interesting if…" — mid-session proposals default to triage mode (pass `triage` or `quick` as the first argument for a fast, single-agent critique; pass `full` or a bare problem space for the 6-phase flow). Orchestrates brainstormer, idea-critic, and research-strategist agents through a 6-phase pipeline: Seed → Diverge → Evaluate → Deepen → Frame → Decide. Includes Carlini's conclusion-first test.
 allowed-tools: Agent, Read, Glob, Grep, WebSearch, WebFetch
 argument-hint: [topic or problem space description]
 ---
@@ -33,6 +33,43 @@ If the user also has the **Academic Writing Agents** plugin installed, you may a
 - `paper-crawler` — for systematic competitive landscape search in Phase 4
 
 ## Session Flow
+
+**Phase map at a glance** (print this table once at session start, in full mode, so the researcher sees the arc upfront):
+
+| # | Name | Purpose | Primary agent |
+|---|------|---------|---------------|
+| 1 | SEED | Understand problem space + prior evaluations | (interview) |
+| 2 | DIVERGE | Generate diverse idea candidates | brainstormer |
+| 3 | EVALUATE | Stress-test top 2–3 ideas | idea-critic × N (parallel) |
+| 4 | DEEPEN | Reality-check against literature + landscape | research-strategist (+ analyst/crawler if installed) |
+| 5 | FRAME | Conclusion-first test; draft nugget + abstract | (optional drafter chain) |
+| 6 | DECIDE | PURSUE / PARK / KILL + first concrete step | (persistence to wiki) |
+
+## Triage Mode (Fast Path)
+
+If `$ARGUMENTS` begins with `triage` or `quick`, run this abbreviated flow instead of the 6-phase protocol. Target: under 3 minutes, 1 agent call. Print a one-liner at the top: `Triage mode: running idea-critic once; skipping SEED / DIVERGE / DEEPEN / FRAME / DECIDE scaffolding.` so the researcher knows what is being dropped.
+
+1. **Prior-context scan (cheap).** Read `.claude/research-state.yaml` → `recent_research_evaluations`. If the proposed idea overlaps a recent entry, surface the earlier verdict and ask whether to re-run or continue.
+
+2. **Single idea-critic pass.** Deploy `Agent(subagent_type="idea-critic", ...)` with the idea description plus the researcher's background from `CLAUDE.md`. Skip brainstormer (no divergence needed — the idea is already given) and research-strategist (no literature triangulation in triage).
+
+3. **Present a compact verdict** (≤ 10 lines):
+   - Verdict: PURSUE / REFINE / KILL
+   - Nugget: one sentence
+   - Strongest pro
+   - Biggest concern
+   - Single highest-priority next question (RS4 riskiest-assumption)
+
+4. **Offer escalation.** Ask: "Escalate to full `/research-companion`, save to IDEAS.md Research Backlog, or drop it?"
+   - `full` → restart in full mode (Phase 1 onward) with the accumulated context
+   - `save` → append one line to `IDEAS.md` under `## Research Backlog — Saved-Aside Ideas` with today's date
+   - `drop` → no persistence; continue prior work
+
+5. **Skip wiki persistence** unless the verdict is PURSUE *and* the user confirms. In that case, follow the standard save path from Phase 6.
+
+**When NOT to use triage.** If the user explicitly says "brainstorm", "full session", or "explore", or provides only a problem space rather than a specific idea, default to full mode regardless of the first `$ARGUMENTS` token.
+
+---
 
 ### Phase 1: SEED — Understand the Problem Space
 
@@ -209,6 +246,10 @@ After presenting the verdict, persist the research evaluation to the wiki:
 
 ## Orchestration Rules
 
+- **Always announce phase purpose, not just number.** At every phase transition, print a single line in this format:
+  > **Phase N — NAME.** One-sentence purpose. (Agents: X, Y.)
+
+  Example: `**Phase 3 — EVALUATE.** Stress-testing top ideas along 7 dimensions. (Agents: idea-critic × 3, in parallel.)` Never say "Starting Phase 3" without the name and purpose — the researcher should not have to remember what each number means.
 - **Maximize parallelism.** In Phases 3 and 4, deploy multiple agents simultaneously.
 - **Show your plan.** Before each phase, briefly state what you're about to do and why.
 - **Let the researcher drive.** Present options and recommendations, but the researcher picks which ideas to evaluate and which to pursue.
@@ -217,5 +258,12 @@ After presenting the verdict, persist the research evaluation to the wiki:
 - **Keep momentum.** Each phase should take 1-2 exchanges with the user, not 5. Aim to complete a full session in 15-20 minutes.
 
 ## User's Input
+
+**Mode flag parsing.** Inspect the first token of `$ARGUMENTS`:
+- `triage` or `quick` → jump to the **Triage Mode (Fast Path)** section above; treat the remainder of `$ARGUMENTS` as the idea description.
+- `full` → force full 6-phase flow; treat the remainder as the problem space.
+- any other first token → full 6-phase flow; treat the entire `$ARGUMENTS` as the problem space.
+
+`triage` and `quick` are reserved words and must appear as the first whitespace-separated token to take effect.
 
 $ARGUMENTS
