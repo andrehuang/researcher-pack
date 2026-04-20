@@ -114,6 +114,17 @@ If ingesting, follow the wiki protocol from `wiki/CLAUDE.md`:
 6. **Append to wiki/log.md**: Record the ingestion with date and details
 7. **Update wiki/index.md**: Add any new pages to the catalog
 
+### Deep-Read Entity Page Structure (when applicable)
+
+If the ingest is a **deep-read** (mechanism traced through code, verification findings, conceptual positioning — not a shallow topic-page summary), the entity page must follow the length-based structure rules in `wiki/wiki.schema.md` under **"Deep-Read Entity Page — Structure at Length"**. Short version, in order of required-for-all to required-at-length:
+
+1. **Always required** (any length): a **TL;DR** block near the top wrapped in `> [!tldr]` Obsidian callout + a **Key Insight** block wrapped in `> [!important]` callout. TL;DR is descriptive (what the paper does + headline number); Key Insight is interpretive (the sharp takeaway the reader should remember).
+2. **At 800–2,000 words**: add **bolded one-sentence leads** to each major section. A reader who skims only the leads should get the Tier-2 summary for free.
+3. **At ≥ 2,000 words**: add a **Reading Guide** (one paragraph directing readers by tier) + a **Table of Contents** with Skim / Core / Depth grouping. Wrap critical verification findings in `> [!warning]` callouts.
+4. **At ≥ 5,000 words**: ask the user at session wrap whether to factor the page into a parent index + child sub-pages. Default is no; the question is the point.
+
+Reference examples: `wiki/entities/chopra-limits-agency-2025.md` (< 2,000 words, simple) and `wiki/entities/suh-subpop-2025.md` (≥ 5,000 words, full structured template). Before writing a new deep-read entity, open at least one of these and mirror the structure at the matching length tier. The section headings can be customized to the paper — the structure (ToC / callouts / leads / tier convention) should not.
+
 After ingesting, emit an event by appending to `events.jsonl`:
 ```jsonl
 {"ts":"[ISO-8601]","type":"wiki:ingest","detail":"Ingested [paper title] → [pages updated]","source":"paper-read"}
