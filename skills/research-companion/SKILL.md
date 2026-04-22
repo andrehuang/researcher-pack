@@ -166,6 +166,8 @@ Use `research-analyst` and `paper-crawler` to:
 
 **Fallback path (companion missing):** Deploy `research-strategist` only (Modes 2, 3, 5 as above). Note in the synthesis: "Literature coverage is shallow because the academic-writing-agents companion is not installed — see README → Companion plugins to enable systematic literature search." Do not block the phase or the session.
 
+**Persistent lit workspace (optional).** If the DEEPEN findings suggest the idea will need a multi-session subfield map (rather than a one-shot triangulation), offer to spin up a `/lit-search` workspace at `wiki/queries/<topic>/`: "This direction will need deeper lit coverage than one pass — want to run `/lit-search <topic>` to build a persistent memory-bank + mind-graph we can return to?" Skip silently if `~/.claude/skills/lit-search/SKILL.md` is not present.
+
 Present findings as a reality check:
 - **Green flags:** Evidence this direction is viable and timely
 - **Yellow flags:** Concerns that can be mitigated

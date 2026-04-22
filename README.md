@@ -17,7 +17,7 @@ The draft has drifted.
 When you type it, the skill reads `.claude/research-state.yaml`, scans the wiki for stale topic pages and unrevisited research evaluations, pulls unresolved review findings from recent events, and produces a briefing in under a page.
 
 The briefing tells you three things: what's due, what drifted, what to pick up.
-It proposes an agenda, and from that agenda it dispatches to the right sub-skill — `/paper-read` if you want to ingest a paper, `/research-companion` if you want to brainstorm, `/weekly-review` if you want a digest, `/orchestrate` if the job is a multi-stage pipeline.
+It proposes an agenda, and from that agenda it dispatches to the right sub-skill — `/paper-read` if you want to ingest a single paper, `/lit-search` if you want to map a subfield, `/research-companion` if you want to brainstorm, `/weekly-review` if you want a digest, `/orchestrate` if the job is a multi-stage pipeline.
 
 Everything else triggers automatically.
 The `PostToolUse` hook fires on every file write.
@@ -64,13 +64,16 @@ flowchart TB
     subgraph Skills
         RS["/research-session"]
         PR["/paper-read"]
+        LS["/lit-search"]
         RC["/research-companion"]
         WR["/weekly-review"]
         OR["/orchestrate"]
         RS --> PR
+        RS --> LS
         RS --> RC
         RS --> WR
         RS --> OR
+        LS --> PR
     end
     subgraph Agents
         IC["idea-critic"]
@@ -144,6 +147,18 @@ Grounds discussion in existing wiki pages before ingesting so you don't re-learn
 Fires explicitly with a path argument.
 Writes to `wiki/topics/*.md`, `wiki/concepts/*.md`, `wiki/sources/`, `wiki/log.md`, `wiki/index.md`.
 Source: `skills/paper-read/SKILL.md`.
+
+### /lit-search
+
+Persistent, per-topic literature-mapping workspace.
+Runs disciplined multi-angle searches (cross-domain synonyms, enabling mechanisms, motivating applications) across Semantic Scholar, WebSearch, and venue-specific queries, then curates results into a scratchpad folder you can return to across sessions.
+
+Fires explicitly with a topic phrase — e.g. `/lit-search micro-macro validation in ABM` — or with `@<existing-topic>` to resume.
+Writes `wiki/queries/<topic>/memory-bank.md`, `mind-graph.md`, and `references.bib`.
+Does not duplicate deep-read content: per-paper summaries are delegated to `/paper-read` (which produces `wiki/entities/<short-id>.md`), and PDFs land in `wiki/sources/papers/` through the same chain.
+When the `mind-graph` stabilizes, graduates to a `wiki/topics/` or `wiki/syntheses/` page; the workspace folder stays as the audit trail.
+Adapted from [bchao1/paper-finder](https://github.com/bchao1/paper-finder) to fit the pack's wiki model.
+Source: `skills/lit-search/SKILL.md`.
 
 ### /research-companion
 
@@ -353,11 +368,13 @@ Either copy works, and whichever one is linked first wins.
 - `/weekly-review`, hooks, and auto-commit work unchanged
 - `/research-companion` runs end-to-end; `/academic` references inside skills skip silently
 - Phase 4 DEEPEN uses `research-strategist` only
+- `/lit-search` runs on Semantic Scholar + WebSearch alone (skips the optional DBLP/OpenAlex pass)
 
 **With the companion:**
 - Phase 4 DEEPEN adds `paper-crawler` and `research-analyst` for literature sweeps
 - Phase 5 FRAME can chain into a real drafting pipeline via `/academic draft`
 - `/academic review` and `/academic draft` are available everywhere
+- `/lit-search` can optionally run `paper-crawler` in parallel for DBLP/OpenAlex venue coverage
 - Plugin-namespaced agents coexist with the pack-vendored ones without conflict
 
 We vendor `brainstormer` directly into researcher-pack because brainstorming is research-ideation, not writing.

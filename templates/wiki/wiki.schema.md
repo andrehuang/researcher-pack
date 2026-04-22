@@ -135,6 +135,26 @@ Structure:
 4. `## Sources Consulted`
 5. `## Follow-up Questions`
 
+### Lit-Search Workspace (`queries/<topic>/`)
+
+Persistent per-topic literature-mapping workspaces produced by the `/lit-search` skill. Unlike single-page query results above, a lit-search workspace is a **folder** containing a living scratchpad for subfield discovery:
+
+```
+queries/<topic>/
+  memory-bank.md        # Append-only list of discovered papers (short-id, venue, tier, notes)
+  mind-graph.md         # Topic-centric hierarchy of sub-themes + key papers
+  references.bib        # Combined BibTeX for all papers (citation key = short-id)
+  discussions/          # Paper-comparison logs (optional)
+```
+
+Conventions:
+- Folder name is a kebab-case topic slug (e.g., `micro-macro-validation-abm/`).
+- Paper `short-id` = `firstauthorlastname-keyword-year`, matching `wiki/entities/` filenames so `/paper-read` hand-offs are consistent.
+- Lit-search workspaces are **scratchpads**, not canonical knowledge. Deep-read summaries live in `wiki/entities/` (via `/paper-read`); survey-level summaries graduate to `wiki/topics/` or `wiki/syntheses/`.
+- PDFs are NOT stored inside the workspace — they live in `wiki/sources/papers/` via `/paper-read`.
+- A workspace is "graduated" (but kept as audit trail) when its `mind-graph.md` has been promoted to a topic or synthesis page.
+- Orphan rule: the workspace itself does not need an incoming wikilink, but any paper it promotes to `wiki/entities/` or `wiki/topics/` follows standard linking rules.
+
 ### Research Evaluation Page (`research-evaluations/`)
 
 Point-in-time verdicts on research directions, produced by `/research-companion`.

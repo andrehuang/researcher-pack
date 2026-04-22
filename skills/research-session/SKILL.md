@@ -89,6 +89,9 @@ After training completes, suggest the next activity.
 Invoke the `/paper-read` skill. Pass through any paper reference the user provides.
 Tell the user: "Switching to paper-read mode." Then follow the paper-read SKILL.md protocol.
 
+### "Lit search" / "Map a subfield" / "Literature review" / "Related work"
+Invoke the `/lit-search` skill with the user's topic. Tell the user: "Starting a persistent lit-search workspace at `wiki/queries/<topic>/`." Then follow the lit-search SKILL.md protocol. Skip this branch silently if `~/.claude/skills/lit-search/SKILL.md` is not installed; fall back to a one-shot `research-analyst` agent pass.
+
 ### "Brainstorm" / "Explore" / "New direction"
 Invoke `/research-companion` with the user's topic.
 Tell the user: "Starting a structured ideation session."

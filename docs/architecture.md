@@ -51,6 +51,8 @@ Here's what happens when you run `/paper-read path/to/paper.pdf`:
 
 At no point did you write a commit message, update an index by hand, or maintain cross-references. That's all in Layer 3.
 
+One other flow worth calling out: `/lit-search` is the "many papers at once" counterpart to `/paper-read`. It owns a per-topic workspace under `wiki/queries/<topic>/` (memory-bank + mind-graph + references.bib) and chains to `/paper-read` whenever the user asks for depth on any one paper. This keeps the "discover" and "deep-read" layers separate: the workspace is the scratchpad, `wiki/entities/` and the topic pages are the canonical record, and the workspace graduates into a `wiki/topics/` or `wiki/syntheses/` page once its mind-graph stabilizes. The hook does not need a special case — edits under `wiki/queries/<topic>/*.md` already match the `wiki:*` dispatch.
+
 ## Extending
 
 **New activity**: write a new skill under `skills/<name>/SKILL.md`. If it reads/writes files, the hook will auto-log its events. If it needs a specialized sub-agent, add it under `agents/`.

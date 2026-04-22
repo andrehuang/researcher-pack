@@ -172,6 +172,10 @@ If the user is actively drafting AND a related topic page exists in the wiki, al
 If the paper's references contain highly relevant work:
 "This paper cites [X] which seems directly relevant to your [topic]. Want to read that next?"
 
+### Option F: Map the surrounding subfield
+If this paper landed in a topic the wiki does not yet survey, or if the related-work section revealed a cluster of unfamiliar papers, suggest `/lit-search`:
+"This paper sits in a subfield we haven't mapped — the related-work section cites [N] papers we don't have. Want to run `/lit-search <topic>` to build a persistent lit workspace at `wiki/queries/<topic>/` and graduate it into a topic page?" Skip this offer silently if the `/lit-search` skill is not installed (check for `~/.claude/skills/lit-search/SKILL.md`).
+
 Execute whichever option(s) the user chooses. If they choose training, run the mental-gym command. If they choose IDEAS.md update, make the edit. Keep the workflow flowing.
 
 ---
