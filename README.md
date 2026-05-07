@@ -289,17 +289,31 @@ cd /path/to/your/research/repo
 `setup.sh init` is the interactive wizard.
 It asks for a target repo root, a one-line research-domain descriptor, a wiki location, optional Mental Gym integration, and whether to enable the auto-commit hook.
 
-Then it scaffolds `.claude/` with hooks and state files, creates a minimal wiki, drops the `.obsidian/` starter from `templates/wiki/.obsidian/` into the new wiki, symlinks skills into `~/.claude/skills/`, and copies agents and principles into `~/.claude/`.
+Then it scaffolds `.claude/` with hooks and state files, creates a minimal wiki, drops the `.obsidian/` starter from `templates/wiki/.obsidian/` into the new wiki, copies skills into `~/.claude/skills/`, and copies agents and principles into `~/.claude/`.
 
 Running it in an existing repo is safe.
 It refuses to overwrite state files and prints warnings instead.
 
 `setup.sh link` is the lighter command.
-It re-symlinks skills and re-copies agents and principles into `~/.claude/` without touching your repo's state files.
+It re-installs skills and re-copies agents and principles into `~/.claude/` without touching your repo's state files.
 Run it after `git pull` in the pack repo to pick up upstream changes.
+
+By default `link` and `init` **copy** skills into `~/.claude/skills/`.
+This works reliably on macOS, Linux, and WSL.
+Pass `--symlink` if you'd rather symlink for `git pull`-driven auto-updates — be aware that Claude Code's skill discovery does not always follow directory symlinks (see [claude-code#25367](https://github.com/anthropics/claude-code/issues/25367)).
+
+`setup.sh verify` lists every pack skill that is and isn't reachable from `~/.claude/skills/`.
+Run it whenever a slash command (e.g. `/research-session`) goes missing.
 
 The 60-second quickstart: clone the repo, run `setup.sh init` in your research repo, open Claude Code, type `/research-session`.
 You'll see a briefing in the first paragraph and a proposed agenda in the second.
+
+### WSL and Windows users
+
+Run `setup.sh` from inside the WSL shell where you also run Claude Code.
+Claude Code installed on the Windows side reads `C:\Users\<you>\.claude\`, while Claude Code installed inside WSL reads `~/.claude` on the Linux side — they are two different directories.
+If you ran the script in WSL but launch Claude Code from Windows (or vice versa), the skills you installed will not be visible.
+After installing, `setup.sh verify` should print "all N pack skills readable" — if not, follow the warnings it prints.
 
 After `init`, your repo layout looks like this:
 
