@@ -2,12 +2,20 @@
 # Researcher Pack — Setup Script
 #
 # Usage:
-#   ./setup.sh init          # interactive wizard: scaffold a fresh repo with the pack
-#   ./setup.sh link          # re-symlink skills/agents/principles into ~/.claude/ (after git pull)
-#   ./setup.sh               # defaults to `link` for backward compatibility
+#   ./setup.sh init                # interactive wizard: scaffold a fresh repo with the pack
+#   ./setup.sh link                # install skills/agents/principles into ~/.claude/ (re-run after `git pull`)
+#   ./setup.sh verify              # check that all pack skills are readable from ~/.claude/skills/
+#   ./setup.sh                     # defaults to `link` for backward compatibility
+#
+# Skill install mode (link/init only):
+#   --copy       (default) copy skill directories into ~/.claude/skills/ — works on macOS, Linux, WSL.
+#                Re-run `./setup.sh link` after `git pull` to refresh.
+#   --symlink    symlink skill directories instead — picks up `git pull` for free, but Claude Code's
+#                skill discovery does not reliably follow directory symlinks on every platform
+#                (notably WSL2 — see https://github.com/anthropics/claude-code/issues/25367).
 #
 # The pack consists of:
-#   - skills/       -> symlinked into ~/.claude/skills/
+#   - skills/       -> copied (or symlinked) into ~/.claude/skills/
 #   - agents/       -> copied into  ~/.claude/agents/
 #   - principles/   -> copied into  ~/.claude/principles/
 #   - hooks/        -> copied into  <target-repo>/.claude/hooks/ (per-repo)
@@ -21,6 +29,15 @@ AGENTS_TARGET="$HOME/.claude/agents"
 PRINCIPLES_TARGET="$HOME/.claude/principles"
 
 MODE="${1:-link}"
+
+# Skill install mode: copy (default) or symlink. Parse from any positional flag.
+INSTALL_MODE="copy"
+for arg in "$@"; do
+    case "$arg" in
+        --symlink) INSTALL_MODE="symlink" ;;
+        --copy)    INSTALL_MODE="copy" ;;
+    esac
+done
 
 # --------------------------------------------------------------------------
 # Helpers
@@ -55,26 +72,60 @@ confirm() {
 }
 
 link_user_assets() {
-    # Skills: symlinked so `git pull` updates them automatically
+    # Skills: copied by default (Claude Code skill discovery does not reliably follow
+    # directory symlinks — see https://github.com/anthropics/claude-code/issues/25367).
+    # Re-run `./setup.sh link` after `git pull` to refresh.
+    # Pass --symlink to opt into symlink mode for `git pull`-driven auto-updates.
     mkdir -p "$SKILLS_TARGET"
     for skill_dir in "$PACK_DIR"/skills/*/; do
         [ -d "$skill_dir" ] || continue
-        local name
+        local name dest target_canonical
         name=$(basename "$skill_dir")
-        if [ -L "$SKILLS_TARGET/$name" ]; then
-            local existing
-            existing=$(readlink "$SKILLS_TARGET/$name")
-            if [ "$existing" = "${skill_dir%/}" ] || [ "$existing" = "$skill_dir" ]; then
-                info "skill: $name (already linked)"
+        dest="$SKILLS_TARGET/$name"
+        target_canonical="${skill_dir%/}"
+
+        if [ "$INSTALL_MODE" = "symlink" ]; then
+            # Symlink mode (advanced)
+            if [ -L "$dest" ]; then
+                local existing
+                existing=$(readlink "$dest")
+                if [ "$existing" = "$target_canonical" ] || [ "$existing" = "$skill_dir" ]; then
+                    info "skill: $name (already linked)"
+                    continue
+                fi
+                rm "$dest"
+            elif [ -d "$dest" ]; then
+                rm -rf "$dest"
+            elif [ -e "$dest" ]; then
+                warn "skill: $name (existing non-symlink, non-dir — leaving in place)"
                 continue
             fi
-            rm "$SKILLS_TARGET/$name"
-        elif [ -e "$SKILLS_TARGET/$name" ]; then
-            warn "skill: $name (existing non-symlink, skipping — remove manually to relink)"
-            continue
+            ln -sfn "$target_canonical" "$dest"
+            action "skill: $name (symlink)"
+        else
+            # Copy mode (default)
+            # Preserve existing symlinks that point back into THIS pack — that's the dev
+            # iteration setup. Replace any other kind of existing entry with a fresh copy.
+            if [ -L "$dest" ] && [ -d "$dest" ]; then
+                local existing
+                existing=$(readlink "$dest")
+                if [ "$existing" = "$target_canonical" ] || [ "$existing" = "$skill_dir" ]; then
+                    info "skill: $name (existing symlink to this pack preserved)"
+                    continue
+                fi
+                rm "$dest"
+            elif [ -L "$dest" ]; then
+                # broken symlink
+                rm "$dest"
+            elif [ -d "$dest" ]; then
+                rm -rf "$dest"
+            elif [ -e "$dest" ]; then
+                warn "skill: $name (existing non-dir file at $dest — skipping)"
+                continue
+            fi
+            cp -R "$skill_dir" "$dest"
+            action "skill: $name (copied)"
         fi
-        ln -sfn "$skill_dir" "$SKILLS_TARGET/$name"
-        action "skill: $name"
     done
 
     # Agents: copied (Claude Code reads them directly)
@@ -103,6 +154,45 @@ link_user_assets() {
             action "principle: $base"
         fi
     done
+}
+
+detect_wsl() {
+    [ -n "$WSL_DISTRO_NAME" ] && return 0
+    [ -r /proc/version ] && grep -qi 'microsoft\|wsl' /proc/version 2>/dev/null && return 0
+    return 1
+}
+
+verify_install() {
+    # Confirm each pack skill is reachable from $SKILLS_TARGET as a readable SKILL.md.
+    local missing=()
+    local ok=0
+    for skill_dir in "$PACK_DIR"/skills/*/; do
+        [ -d "$skill_dir" ] || continue
+        local name skillmd
+        name=$(basename "$skill_dir")
+        skillmd="$SKILLS_TARGET/$name/SKILL.md"
+        if [ -r "$skillmd" ]; then
+            ok=$((ok + 1))
+        else
+            missing+=("$name")
+        fi
+    done
+    if [ ${#missing[@]} -eq 0 ]; then
+        info "all $ok pack skills readable from $SKILLS_TARGET"
+        return 0
+    fi
+    warn "$((${#missing[@]})) of $((ok + ${#missing[@]})) pack skills not readable from $SKILLS_TARGET:"
+    local s
+    for s in "${missing[@]}"; do
+        warn "  - $s  (expected: $SKILLS_TARGET/$s/SKILL.md)"
+    done
+    if detect_wsl; then
+        warn "WSL detected. If you ALSO have Claude Code installed on the Windows side,"
+        warn "  it reads C:\\Users\\<you>\\.claude\\ — a different directory from this WSL ~/.claude."
+        warn "  Run Claude Code from inside WSL (the same shell where you ran this script) to see the skills."
+    fi
+    warn "Try \`./setup.sh link --copy\` to (re)install in copy mode."
+    return 1
 }
 
 detect_academic_companion() {
@@ -154,15 +244,31 @@ materialize_template() {
 # --------------------------------------------------------------------------
 
 run_link() {
-    bold "Researcher Pack — link mode"
-    echo "Linking skills, agents, and principles into ~/.claude/"
+    bold "Researcher Pack — link mode (skills: $INSTALL_MODE)"
+    echo "Installing skills, agents, and principles into ~/.claude/"
     echo ""
     link_user_assets
+    echo ""
+    verify_install || true
     echo ""
     detect_academic_companion
     echo ""
     bold "Done."
     echo "Use \`./setup.sh init\` from a research repo to scaffold hooks and state files."
+    echo "After \`git pull\` in this pack, re-run \`./setup.sh link\` to refresh skills."
+}
+
+run_verify() {
+    bold "Researcher Pack — verify mode"
+    echo "Checking that every pack skill is reachable from $SKILLS_TARGET"
+    echo ""
+    if verify_install; then
+        bold "OK."
+    else
+        echo ""
+        bold "Some skills are missing — see warnings above."
+        exit 1
+    fi
 }
 
 # --------------------------------------------------------------------------
@@ -323,10 +429,12 @@ run_init() {
 # --------------------------------------------------------------------------
 
 case "$MODE" in
-    init)  run_init ;;
-    link)  run_link ;;
+    init)    run_init ;;
+    link)    run_link ;;
+    verify)  run_verify ;;
+    --symlink|--copy) run_link ;;  # bare flag → default to link mode
     *)
-        echo "Usage: $0 [init|link]" >&2
+        echo "Usage: $0 [init|link|verify] [--copy|--symlink]" >&2
         exit 1
         ;;
 esac
